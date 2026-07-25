@@ -7,8 +7,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import org.lwjgl.input.Keyboard;
 
-@Mod(modid = "ridelock", name = "Ride Lock", version = "1.0.2")
+@Mod(modid = RideLock.MOD_ID, name = "Ride Lock", version = RideLock.VERSION)
 public class RideLock {
+    public static final String MOD_ID = "ridelock";
+    public static final String VERSION = "1.0.2";
     public static KeyBinding toggleKey;
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {

@@ -2,12 +2,12 @@
 {
   "modid": "ridelock",
   "name": "Ride Lock",
-  "description": "Synchronizes your camera rotation with the vehicle you are riding.",
-  "version": "1.0.2",
+  "description": "Modified for NebulaeCraft 5th Server.",
+  "version": "${version}",
   "mcversion": "1.12.2",
   "url": "",
   "updateUrl": "",
-  "authorList": ["sobersquid"],
+  "authorList": ["sobersquid", "Kuina_20"],
   "logoFile": "",
   "screenshots": [],
   "dependencies": []
