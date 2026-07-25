@@ -3,3 +3,7 @@ key.ridelock.toggle=Toggle Ride Lock
 
 # Categories
 key.category.ridelock=Ride Lock Mod
+
+# Configuration
+config.ridelock.trajectoryWindowSeconds=Trajectory Window (seconds)
+config.ridelock.sampleIntervalMilliseconds=Sample Interval (milliseconds)

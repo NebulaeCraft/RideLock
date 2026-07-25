@@ -2,96 +2,93 @@ package com.sobersquid.ridelock;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.entity.item.EntityMinecart;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class RideLockHandler {
-    private double lastX, lastY, lastZ;
-    private float lastYaw;
-    private boolean wasRiding = false;
+    private final TrajectoryFitter trajectoryFitter = new TrajectoryFitter();
+
+    private EntityMinecart trackedMinecart;
     private boolean isEnabled = true;
-    private long lastTime = System.currentTimeMillis();
-
-    private float smoothedYawDelta = 0;
-    private float smoothedPitch = 0;
-
-    private static final float LERP_SENSITIVITY = 10.0f;
-    private static final float PITCH_STRENGTH = 0.4f;
 
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public void onCameraSetup(EntityViewRenderEvent.CameraSetup event) {
-    	Minecraft mc = Minecraft.getMinecraft();
+        Minecraft mc = Minecraft.getMinecraft();
         // Keybind enable/disable logic
         while (RideLock.toggleKey.isPressed()) {
             isEnabled = !isEnabled;
-        	String keystatus = isEnabled ? "§aEnabled" : "§cDisabled";
+            String keystatus = isEnabled ? "§aEnabled" : "§cDisabled";
             String keytext = "§7Ride Lock: " + keystatus;
-            net.minecraft.util.text.ITextComponent message = new net.minecraft.util.text.TextComponentString(keytext);
-            mc.player.sendStatusMessage(message, true);
+            if (mc.player != null) {
+                net.minecraft.util.text.ITextComponent message = new net.minecraft.util.text.TextComponentString(keytext);
+                mc.player.sendStatusMessage(message, true);
+            }
+            resetTracking();
         }
         // Safety Check to stop if player doesn't yet exist
-        if (mc.player == null || mc.isGamePaused()) return;
+        if (mc.player == null || mc.isGamePaused()) {
+            resetTracking();
+            return;
+        }
         
         if (!isEnabled) {
-            wasRiding = false;
+            resetTracking();
             return;
         }
 
         Entity vehicle = mc.player.getRidingEntity();
-        if (vehicle == null) {
-            wasRiding = false;
+        if (!(vehicle instanceof EntityMinecart)) {
+            resetTracking();
             return;
         }
-        // Tracking ride vehicle in space
-        long currentTime = System.currentTimeMillis();
-        float deltaTime = (currentTime - lastTime) / 1000.0f;
-        lastTime = currentTime;
+
+        EntityMinecart minecart = (EntityMinecart) vehicle;
+        if (trackedMinecart != minecart) {
+            resetTracking();
+            trackedMinecart = minecart;
+        }
+
+        long currentTimeNanos = System.nanoTime();
+        trajectoryFitter.configure(
+                RideLockConfig.getWindowNanos(), RideLockConfig.getSampleIntervalNanos());
 
         float partialTicks = (float) event.getRenderPartialTicks();
-        double curX = vehicle.lastTickPosX + (vehicle.posX - vehicle.lastTickPosX) * partialTicks;
-        double curY = vehicle.lastTickPosY + (vehicle.posY - vehicle.lastTickPosY) * partialTicks;
-        double curZ = vehicle.lastTickPosZ + (vehicle.posZ - vehicle.lastTickPosZ) * partialTicks;
+        double curX = mc.player.lastTickPosX + (mc.player.posX - mc.player.lastTickPosX) * partialTicks;
+        double curY = mc.player.lastTickPosY + (mc.player.posY - mc.player.lastTickPosY) * partialTicks;
+        double curZ = mc.player.lastTickPosZ + (mc.player.posZ - mc.player.lastTickPosZ) * partialTicks;
 
-        double dx = curX - lastX;
-        double dy = curY - lastY;
-        double dz = curZ - lastZ;
-        double horizontalDistSq = dx * dx + dz * dz;
-        // determine camera to match vehicle movement
-        float currentYaw = lastYaw;
-        float currentPitch = 0;
-
-        if (horizontalDistSq > 0.000001) {
-            currentYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-            currentPitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(horizontalDistSq)));
-        }
-
-        if (!wasRiding) {
-            lastX = curX; lastY = curY; lastZ = curZ;
-            lastYaw = currentYaw;
-            smoothedYawDelta = 0;
-            smoothedPitch = 0;
-            wasRiding = true;
+        TrajectoryFitter.FitResult tangent = trajectoryFitter.update(currentTimeNanos, curX, curY, curZ);
+        trajectoryFitter.consumeDiscontinuityReset();
+        if (!tangent.valid) {
             return;
         }
-        // Smooth the view out to mitigate jitters
-        float lerpFactor = MathHelper.clamp(deltaTime * LERP_SENSITIVITY, 0.0f, 1.0f);
-        float yawDelta = MathHelper.wrapDegrees(currentYaw - lastYaw);
-        // Final Camera Movement
-        smoothedYawDelta = smoothedYawDelta + (yawDelta - smoothedYawDelta) * lerpFactor;
-        smoothedPitch = smoothedPitch + (currentPitch - smoothedPitch) * lerpFactor;
-        
-        if (Math.abs(smoothedYawDelta) > 0.001f) {
-            mc.player.rotationYaw = MathHelper.wrapDegrees(mc.player.rotationYaw + smoothedYawDelta);
-            mc.player.prevRotationYaw = mc.player.rotationYaw - smoothedYawDelta;
-        }
 
-        event.setPitch(event.getPitch() + (smoothedPitch * PITCH_STRENGTH));
+        double horizontalSpeed = Math.sqrt(tangent.vx * tangent.vx + tangent.vz * tangent.vz);
+        float currentYaw = (float) Math.toDegrees(Math.atan2(-tangent.vx, tangent.vz));
+        float currentPitch = (float) -Math.toDegrees(Math.atan2(tangent.vy, horizontalSpeed));
 
-        lastX = curX; lastY = curY; lastZ = curZ;
-        lastYaw = currentYaw;
+        // Apply the fitted tangent directly. This avoids integrating small fit
+        // errors into the player's view over successive render frames.
+        mc.player.rotationYaw = currentYaw;
+        mc.player.prevRotationYaw = currentYaw;
+        mc.player.rotationPitch = currentPitch;
+        mc.player.prevRotationPitch = currentPitch;
+        // CameraSetup stores the OpenGL camera rotation. Vanilla supplies the
+        // entity yaw plus 180 degrees here, rather than the entity yaw itself.
+        event.setYaw(cameraSetupYaw(currentYaw));
+        event.setPitch(currentPitch);
+    }
+
+    static float cameraSetupYaw(float playerYaw) {
+        return playerYaw + 180.0f;
+    }
+
+    private void resetTracking() {
+        trajectoryFitter.reset();
+        trackedMinecart = null;
     }
 }
