@@ -13,7 +13,12 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '1.0.2'
+def rideLockSource = file('src/main/java/com/sobersquid/ridelock/RideLock.java')
+def versionMatcher = rideLockSource.getText('UTF-8') =~ /public\s+static\s+final\s+String\s+VERSION\s*=\s*"([^"]+)"/
+if (!versionMatcher.find()) {
+    throw new GradleException('Could not read RideLock.VERSION from RideLock.java')
+}
+version = versionMatcher.group(1)
 group = 'com.sobersquid.ridelock' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'ridelock'
 compileJava.options.encoding = 'UTF-8'
@@ -82,6 +87,13 @@ dependencies {
 
 }
 
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('mcmod.info') {
+        expand version: project.version
+    }
+}
+
 // Example for how to get properties into the manifest for reading by the runtime..
 jar {
     manifest {
@@ -90,7 +102,7 @@ jar {
             "Specification-Vendor": "sobersquid",
             "Specification-Version": "1",
             "Implementation-Title": "RideLock",
-            "Implementation-Version": "1.0",
+            "Implementation-Version": project.version,
             "Implementation-Vendor" :"sobersquid",
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
