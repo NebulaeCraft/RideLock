@@ -3,3 +3,7 @@ key.ridelock.toggle=Toggle Ride Lock
 
 # Categories
 key.category.ridelock=Ride Lock Mod
+
+# Config
+config.ridelock.tangentSampleSpacing=Tangent Sample Spacing
+config.ridelock.tangentSampleSpacing.tooltip=Arc length in blocks between tangent samples. Smaller values follow the fitted curve more precisely; larger values smooth more broadly.

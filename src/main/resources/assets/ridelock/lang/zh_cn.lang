@@ -1,0 +1,9 @@
+# Keybindings
+key.ridelock.toggle=开关 Ride Lock
+
+# Categories
+key.category.ridelock=Ride Lock Mod
+
+# Config
+config.ridelock.tangentSampleSpacing=切线采样间距
+config.ridelock.tangentSampleSpacing.tooltip=拟合曲线上相邻切线采样点的弧长间距（方块）。较小的值更精确地跟随曲线，较大的值提供更广的平滑。

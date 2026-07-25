@@ -14,6 +14,7 @@ public class RideLock {
     public static KeyBinding toggleKey;
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
+        RideLockConfig.normalizeLoadedValue();
         toggleKey = new KeyBinding("key.ridelock.toggle", Keyboard.KEY_F9, "Ride Lock");
         ClientRegistry.registerKeyBinding(toggleKey);
         MinecraftForge.EVENT_BUS.register(new RideLockHandler());
