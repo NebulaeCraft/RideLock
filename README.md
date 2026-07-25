@@ -12,10 +12,11 @@ Railcraft turnouts and wyes are supported without making Railcraft a required de
 
 **Features**
 
-* Toggleable: Hit F9 (default) to turn the lock on or off instantly.
+* Toggleable: Hit F7 (default) to turn the lock on or off instantly.
 * Client-Side Only: This does not need to be installed on the server.
 * Smooth Large Curves: Uses a continuous fitted rail path instead of frame-to-frame minecart movement.
 * Railcraft Compatible: Follows the currently selected turnout or wye branch when Railcraft is present.
-* Configurable Sampling: The tangent sample spacing can be changed from the Forge Mods config menu in 0.1-block increments (default 4.0, range 0.1–32.0) without restarting Minecraft.
+* Live Curve Tuning: Tangent sample spacing (default 4, range 1–32), B-spline control point spacing (default 8, range 2–64), and three-dimensional smoothing weight (default 4, range 1–64) can be changed as integers from the Forge Mods config menu without restarting Minecraft.
+* Vertical Camera Influence: The fitted tangent's vertical effect on camera pitch is adjustable in 0.1 increments (default 1.0, range 0.0–2.0) and applies immediately without restarting Minecraft.
 
 Special thanks to Bergerhealer for the inspiration via SmoothCoasters (https://github.com/bergerhealer/SmoothCoasters/)

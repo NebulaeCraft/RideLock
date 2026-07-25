@@ -43,6 +43,19 @@ public class SmoothTrackCurveTest {
     }
 
     @Test
+    public void supportsConfigurableControlSpacingAndSmoothness() {
+        List<Vector3> points = voxelCircle(60.0, -0.7, 0.7);
+
+        SmoothTrackCurve detailed = SmoothTrackCurve.fit(points, 3.0, 4.0, 1.0);
+        SmoothTrackCurve broad = SmoothTrackCurve.fit(points, 3.0, 16.0, 12.0);
+
+        assertTrue(detailed.length() > 0.0);
+        assertTrue(broad.length() > 0.0);
+        assertTrue(detailed.directionAt(points.get(points.size() / 2)).lengthSquared() > 0.99);
+        assertTrue(broad.directionAt(points.get(points.size() / 2)).lengthSquared() > 0.99);
+    }
+
+    @Test
     public void fitsThreeDimensionalSlope() {
         List<Vector3> points = new ArrayList<>();
         for (int z = -64; z <= 64; z++) points.add(new Vector3(10.5, 40.5 + z * 0.25, z + 0.5));

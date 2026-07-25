@@ -30,15 +30,27 @@ public final class SmoothTrackCurve {
     }
 
     public static SmoothTrackCurve fit(List<Vector3> samples) {
-        return fit(samples, DEFAULT_TANGENT_SAMPLE_SPACING);
+        return fit(samples, DEFAULT_TANGENT_SAMPLE_SPACING,
+                CONTROL_POINT_SPACING, SMOOTHNESS_WEIGHT);
     }
 
     public static SmoothTrackCurve fit(List<Vector3> samples, double tangentSampleSpacing) {
+        return fit(samples, tangentSampleSpacing, CONTROL_POINT_SPACING, SMOOTHNESS_WEIGHT);
+    }
+
+    public static SmoothTrackCurve fit(List<Vector3> samples, double tangentSampleSpacing,
+                                       double controlPointSpacing, double smoothnessWeight) {
         if (samples == null || samples.size() < 9) {
             throw new IllegalArgumentException("At least nine samples are required");
         }
         if (!Double.isFinite(tangentSampleSpacing) || tangentSampleSpacing <= 0.0) {
             throw new IllegalArgumentException("Tangent sample spacing must be finite and positive");
+        }
+        if (!Double.isFinite(controlPointSpacing) || controlPointSpacing <= 0.0) {
+            throw new IllegalArgumentException("Control point spacing must be finite and positive");
+        }
+        if (!Double.isFinite(smoothnessWeight) || smoothnessWeight < 0.0) {
+            throw new IllegalArgumentException("Smoothness weight must be finite and non-negative");
         }
 
         List<Vector3> unique = removeConsecutiveDuplicates(samples);
@@ -53,7 +65,7 @@ public final class SmoothTrackCurve {
         }
 
         int controlCount = Math.max(DEGREE + 1,
-                (int) Math.ceil(rawLength / CONTROL_POINT_SPACING) + DEGREE);
+                (int) Math.ceil(rawLength / controlPointSpacing) + DEGREE);
         double endParameter = controlCount - DEGREE;
         double[] knots = makeOpenUniformKnots(controlCount, endParameter);
 
@@ -76,7 +88,7 @@ public final class SmoothTrackCurve {
             }
         }
 
-        addSecondDifferencePenalty(normal, SMOOTHNESS_WEIGHT);
+        addSecondDifferencePenalty(normal, smoothnessWeight);
         for (int index = 0; index < controlCount; index++) {
             normal[index][index] += SOLVER_EPSILON;
         }

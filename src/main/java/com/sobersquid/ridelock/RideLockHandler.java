@@ -33,7 +33,9 @@ public class RideLockHandler {
     private World trackedWorld;
     private SmoothTrackCurve fittedCurve;
     private List<BlockPos> fittedBlocks = Collections.emptyList();
-    private double fittedTangentSampleSpacing = Double.NaN;
+    private int fittedTangentSampleSpacing = -1;
+    private int fittedControlPointSpacing = -1;
+    private int fittedSmoothnessWeight = -1;
 
     private boolean curveCameraActive;
     private float lockedYaw;
@@ -82,15 +84,22 @@ public class RideLockHandler {
             return;
         }
 
-        double tangentSampleSpacing = RideLockConfig.tangentSampleSpacing();
+        int tangentSampleSpacing = RideLockConfig.tangentSampleSpacing();
+        int controlPointSpacing = RideLockConfig.controlPointSpacing();
+        int smoothnessWeight = RideLockConfig.smoothnessWeight();
         if (!path.blocks().equals(fittedBlocks)
-                || Double.compare(tangentSampleSpacing, fittedTangentSampleSpacing) != 0) {
+                || tangentSampleSpacing != fittedTangentSampleSpacing
+                || controlPointSpacing != fittedControlPointSpacing
+                || smoothnessWeight != fittedSmoothnessWeight) {
             try {
                 SmoothTrackCurve newCurve = SmoothTrackCurve.fit(
-                        path.centers(), tangentSampleSpacing);
+                        path.centers(), tangentSampleSpacing,
+                        controlPointSpacing, smoothnessWeight);
                 fittedCurve = newCurve;
                 fittedBlocks = Collections.unmodifiableList(new ArrayList<>(path.blocks()));
                 fittedTangentSampleSpacing = tangentSampleSpacing;
+                fittedControlPointSpacing = controlPointSpacing;
+                fittedSmoothnessWeight = smoothnessWeight;
             } catch (IllegalArgumentException ignored) {
                 handleCurveSampleFailure();
                 return;
@@ -123,8 +132,8 @@ public class RideLockHandler {
         if (horizontalSquared < MIN_HORIZONTAL_TANGENT_SQUARED) return;
 
         float targetYaw = (float) Math.toDegrees(Math.atan2(-direction.x, direction.z));
-        float targetPitch = (float) -Math.toDegrees(Math.atan2(direction.y, Math.sqrt(horizontalSquared)));
-        targetPitch = MathHelper.clamp(targetPitch, -90.0f, 90.0f);
+        float targetPitch = pitchFromCurveDirection(
+                direction, horizontalSquared, RideLockConfig.verticalCameraInfluence());
 
         CameraOrientationSmoother.Orientation orientation = orientationSmoother.update(
                 targetYaw, targetPitch, mc.player.rotationYaw, mc.player.rotationPitch,
@@ -138,6 +147,14 @@ public class RideLockHandler {
         mc.player.rotationPitch = lockedPitch;
         curveCameraActive = true;
         fallbackWasRiding = false;
+    }
+
+    static float pitchFromCurveDirection(Vector3 direction, double horizontalSquared,
+                                         double verticalInfluence) {
+        double scaledVertical = direction.y * verticalInfluence;
+        float pitch = (float) -Math.toDegrees(
+                Math.atan2(scaledVertical, Math.sqrt(horizontalSquared)));
+        return MathHelper.clamp(pitch, -90.0f, 90.0f);
     }
 
     @SideOnly(Side.CLIENT)
@@ -238,7 +255,9 @@ public class RideLockHandler {
     private void clearFittedCurve() {
         fittedCurve = null;
         fittedBlocks = Collections.emptyList();
-        fittedTangentSampleSpacing = Double.NaN;
+        fittedTangentSampleSpacing = -1;
+        fittedControlPointSpacing = -1;
+        fittedSmoothnessWeight = -1;
         curveCameraActive = false;
         orientationSmoother.reset();
         curveFailureGuard.reset();

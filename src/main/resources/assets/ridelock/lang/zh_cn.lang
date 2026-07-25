@@ -6,4 +6,10 @@ key.category.ridelock=Ride Lock Mod
 
 # Config
 config.ridelock.tangentSampleSpacing=切线采样间距
-config.ridelock.tangentSampleSpacing.tooltip=拟合曲线上相邻切线采样点的弧长间距（方块）。较小的值更精确地跟随曲线，较大的值提供更广的平滑。
+config.ridelock.tangentSampleSpacing.tooltip=拟合曲线上相邻切线采样点的整数弧长间距（方块）。较小的值更精确地跟随曲线，较大的值提供更广的平滑。
+config.ridelock.controlPointSpacing=控制点间距
+config.ridelock.controlPointSpacing.tooltip=B 样条控制点之间的近似整数距离（方块）。较小的值更贴合局部轨道细节，较大的值进行更宏观的拟合。
+config.ridelock.smoothnessWeight=平滑权重
+config.ridelock.smoothnessWeight.tooltip=三维曲率平滑惩罚的整数强度。较大的值使曲率更加缓和，但拟合曲线可能离轨道采样点更远。
+config.ridelock.verticalCameraInfluence=垂直视角影响
+config.ridelock.verticalCameraInfluence.tooltip=拟合切线垂直分量对相机俯仰角的影响倍率。0 表示禁用，1 表示保持原始坡度，2 表示加倍。

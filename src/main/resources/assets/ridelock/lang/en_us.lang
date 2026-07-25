@@ -6,4 +6,10 @@ key.category.ridelock=Ride Lock Mod
 
 # Config
 config.ridelock.tangentSampleSpacing=Tangent Sample Spacing
-config.ridelock.tangentSampleSpacing.tooltip=Arc length in blocks between tangent samples. Smaller values follow the fitted curve more precisely; larger values smooth more broadly.
+config.ridelock.tangentSampleSpacing.tooltip=Whole-block arc length between tangent samples. Smaller values follow the fitted curve more precisely; larger values smooth more broadly.
+config.ridelock.controlPointSpacing=Control Point Spacing
+config.ridelock.controlPointSpacing.tooltip=Approximate whole-block distance between B-spline control points. Smaller values follow local track details; larger values fit the path more broadly.
+config.ridelock.smoothnessWeight=Smoothness Weight
+config.ridelock.smoothnessWeight.tooltip=Integer strength of three-dimensional curvature smoothing. Larger values produce gentler curvature but can move the fit farther from the rails.
+config.ridelock.verticalCameraInfluence=Vertical Camera Influence
+config.ridelock.verticalCameraInfluence.tooltip=Multiplier for the fitted tangent's vertical effect on camera pitch. 0 disables it, 1 uses the original slope, and 2 doubles it.
